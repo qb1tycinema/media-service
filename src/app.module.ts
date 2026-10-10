@@ -7,7 +7,8 @@ import {
 	grpcEnv,
 	httpEnv,
 	jaegerEnv,
-	loggerEnv
+	loggerEnv,
+	storageEnv
 } from "./config/env"
 import { getPinoConfig } from "./config/loaders"
 import { ObservabilityModule } from "./observability/observability.module"
@@ -21,7 +22,14 @@ import { ObservabilityModule } from "./observability/observability.module"
 				`.env.${process.env.NODE_ENV}`,
 				".env"
 			],
-			load: [environemtEnv, grpcEnv, httpEnv, jaegerEnv, loggerEnv]
+			load: [
+				environemtEnv,
+				grpcEnv,
+				httpEnv,
+				jaegerEnv,
+				loggerEnv,
+				storageEnv
+			]
 		}),
 		LoggerModule.forRootAsync({
 			useFactory: getPinoConfig,
