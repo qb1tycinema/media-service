@@ -8,7 +8,6 @@ export const httpEnv = registerAs<HttpConfig>("http", () => {
 	validateEnv(process.env, HttpValidator)
 
 	return {
-		host: process.env.GRPC_HOST,
 		port: parseInt(process.env.GRPC_PORT)
 	}
 })

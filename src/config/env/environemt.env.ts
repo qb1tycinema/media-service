@@ -8,6 +8,6 @@ export const environemtEnv = registerAs<EnvironemtConfig>("environemt", () => {
 	const validated = validateEnv(process.env, EnvironemtValidator)
 
 	return {
-		environemt: validated.NODE_ENV
+		env: validated.NODE_ENV
 	}
 })
