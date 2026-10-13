@@ -15,7 +15,7 @@ async function bootstrap() {
 	const logger = new Logger()
 
 	const httpPort = config.get("http.port", { infer: true })
-	const environment = config.get("environemt.environemt", { infer: true })
+	const environemt = config.get("environemt.env", { infer: true })
 
 	createGrpcServer(app, config)
 
@@ -25,6 +25,6 @@ async function bootstrap() {
 
 	await app.listen(httpPort)
 	logger.log(`HTTP listening on ${httpPort}`, "Bootstrap")
-	logger.log(`🚀 Starting media-service in ${environment} mode`, "Bootstrap")
+	logger.log(`🚀 Starting media-service in ${environemt} mode`, "Bootstrap")
 }
 bootstrap()
