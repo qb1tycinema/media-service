@@ -18,7 +18,11 @@ export function createGrpcServer(
 			package: grpcPackages,
 			protoPath: grpcProtoPaths,
 			url: `${host}:${port}`,
-			loader: grpcLoader
+			loader: grpcLoader,
+			channelOptions: {
+				"grpc.max_receive_message_length": 1024 * 1024 * 20,
+				"grpc.max_send_message_length": 1024 * 1024 * 20
+			}
 		}
 	})
 }
