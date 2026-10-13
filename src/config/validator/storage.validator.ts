@@ -16,4 +16,8 @@ export class StorageValidator {
 	@IsString()
 	@IsNotEmpty()
 	public S3_SECRET_KEY!: string
+
+	@IsString()
+	@IsNotEmpty()
+	public S3_PUBLIC_URL!: string
 }
