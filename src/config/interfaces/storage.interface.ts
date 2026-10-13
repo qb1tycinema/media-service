@@ -3,4 +3,5 @@ export interface StorageConfig {
 	region: string
 	accessKey: string
 	secretKey: string
+	publicUrl: string
 }
