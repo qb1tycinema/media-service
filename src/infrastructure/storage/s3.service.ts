@@ -3,7 +3,7 @@ import {
 	DeleteObjectCommand,
 	GetObjectCommand,
 	HeadBucketCommand,
-	PutObjectAclCommand,
+	PutObjectCommand,
 	S3Client
 } from "@aws-sdk/client-s3"
 import { Upload } from "@aws-sdk/lib-storage"
@@ -19,6 +19,7 @@ import type { AllConfigs } from "@/config"
 export class S3Service implements OnModuleInit {
 	private readonly client: S3Client
 	private readonly bucket: string
+	private readonly cdnUrl: string
 
 	public constructor(
 		private readonly configService: ConfigService<AllConfigs>,
@@ -35,6 +36,7 @@ export class S3Service implements OnModuleInit {
 		})
 
 		this.bucket = this.configService.get("storage.bucket", { infer: true })
+		this.cdnUrl = this.configService.get("storage.publicUrl", { infer: true })
 
 		this.client = new S3Client({
 			region,
@@ -112,6 +114,15 @@ export class S3Service implements OnModuleInit {
 		await this.client.send(command)
 	}
 
+	public getPublicUrl(key: string) {
+		if (this.cdnUrl) {
+			const cleanCdn = this.cdnUrl.endsWith("/") ? this.cdnUrl.slice(0, -1) : this.cdnUrl
+            return `${cleanCdn}/${key}`
+		}
+
+		return `https://${this.bucket}.s3.${this.client.config.region}.amazonaws.com/${key}`
+	}
+
 	public async getPresignedUrl(
 		key: string,
 		expiresInSeconds: number,
@@ -120,7 +131,7 @@ export class S3Service implements OnModuleInit {
 		const command =
 			method === "GET"
 				? new GetObjectCommand({ Bucket: this.bucket, Key: key })
-				: new PutObjectAclCommand({ Bucket: this.bucket, Key: key })
+				: new PutObjectCommand({ Bucket: this.bucket, Key: key })
 
 		return await getSignedUrl(this.client, command as any, {
 			expiresIn: expiresInSeconds
