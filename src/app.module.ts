@@ -11,6 +11,7 @@ import {
 	storageEnv
 } from "./config/env"
 import { getPinoConfig } from "./config/loaders"
+import { MediaModule } from "./modules/media/media.module"
 import { ObservabilityModule } from "./observability/observability.module"
 
 @Module({
@@ -35,7 +36,8 @@ import { ObservabilityModule } from "./observability/observability.module"
 			useFactory: getPinoConfig,
 			inject: [ConfigService]
 		}),
-		ObservabilityModule
+		ObservabilityModule,
+		MediaModule
 	]
 })
 export class AppModule {}
