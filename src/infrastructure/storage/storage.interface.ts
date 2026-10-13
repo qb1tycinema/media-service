@@ -20,5 +20,7 @@ export interface IStorageService {
 
 	delete: (key: string) => Promise<void>
 
+	getPublicUrl: (key: string) => string
+
 	close: () => Promise<void>
 }
