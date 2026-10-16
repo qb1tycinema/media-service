@@ -8,6 +8,6 @@ export const httpEnv = registerAs<HttpConfig>("http", () => {
 	validateEnv(process.env, HttpValidator)
 
 	return {
-		port: parseInt(process.env.GRPC_PORT)
+		port: parseInt(process.env.HTTP_PORT)
 	}
 })
