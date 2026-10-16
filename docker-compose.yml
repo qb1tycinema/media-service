@@ -1,0 +1,22 @@
+version: "3.9"
+
+services:
+  media-service:
+    container_name: media-service
+    image: qb1tycinema/media-service:dev
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+    env_file:
+      - .env.production.local
+    expose:
+      - "9104"
+    volumes:
+      - ../docker/logs/media:/var/log/services/media
+    networks:
+      - qb1tycinema
+
+networks:
+  qb1tycinema:
+    external: true
