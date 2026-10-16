@@ -5,7 +5,7 @@ import type {
 } from "@qb1tycinema/contracts/gen/media"
 import { PinoLogger } from "nestjs-pino"
 
-import type { S3Service } from "@/infrastructure/storage/s3.service"
+import { S3Service } from "@/infrastructure/storage/s3.service"
 
 @Injectable()
 export class DeleteUseCase {
