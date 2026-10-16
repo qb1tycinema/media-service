@@ -36,7 +36,9 @@ export class S3Service implements OnModuleInit {
 		})
 
 		this.bucket = this.configService.get("storage.bucket", { infer: true })
-		this.cdnUrl = this.configService.get("storage.publicUrl", { infer: true })
+		this.cdnUrl = this.configService.get("storage.publicUrl", {
+			infer: true
+		})
 
 		this.client = new S3Client({
 			region,
@@ -116,8 +118,10 @@ export class S3Service implements OnModuleInit {
 
 	public getPublicUrl(key: string) {
 		if (this.cdnUrl) {
-			const cleanCdn = this.cdnUrl.endsWith("/") ? this.cdnUrl.slice(0, -1) : this.cdnUrl
-            return `${cleanCdn}/${key}`
+			const cleanCdn = this.cdnUrl.endsWith("/")
+				? this.cdnUrl.slice(0, -1)
+				: this.cdnUrl
+			return `${cleanCdn}/${key}`
 		}
 
 		return `https://${this.bucket}.s3.${this.client.config.region}.amazonaws.com/${key}`

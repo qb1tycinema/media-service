@@ -7,13 +7,13 @@ import type {
 	UploadResponse
 } from "@qb1tycinema/contracts/gen/media"
 import { randomUUID } from "crypto"
-import type { PinoLogger } from "nestjs-pino"
+import { PinoLogger } from "nestjs-pino"
 import path from "path"
 import type { Observable } from "rxjs"
 import { PassThrough } from "stream"
 
-import type { ImageProcessorService } from "@/infrastructure/images/image-processor.service"
-import type { S3Service } from "@/infrastructure/storage/s3.service"
+import { ImageProcessorService } from "@/infrastructure/images/image-processor.service"
+import { S3Service } from "@/infrastructure/storage/s3.service"
 
 @Injectable()
 export class UploadUseCase {

@@ -1,4 +1,4 @@
-import { IsInt, IsString } from "class-validator"
+import { IsInt } from "class-validator"
 
 export class HttpValidator {
 	@IsInt()
