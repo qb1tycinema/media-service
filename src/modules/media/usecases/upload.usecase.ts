@@ -1,4 +1,3 @@
-import { status } from "@grpc/grpc-js"
 import { Injectable } from "@nestjs/common"
 import { RpcException } from "@nestjs/microservices"
 import type {
@@ -9,7 +8,7 @@ import type {
 import { randomUUID } from "crypto"
 import { PinoLogger } from "nestjs-pino"
 import path from "path"
-import type { Observable } from "rxjs"
+import { from, Observable } from "rxjs"
 import { PassThrough } from "stream"
 
 import { ImageProcessorService } from "@/infrastructure/images/image-processor.service"
@@ -25,74 +24,76 @@ export class UploadUseCase {
 		this.logger.setContext(UploadUseCase.name)
 	}
 
-	public async execute(
+	public execute(
 		requestStream: Observable<UploadRequest>
-	): Promise<UploadResponse> {
-		return new Promise((resolve, reject) => {
-			const passThrough = new PassThrough()
+	): Observable<UploadResponse> {
+		return from(
+			new Promise<UploadResponse>((resolve, reject) => {
+				const passThrough = new PassThrough()
 
-			let metadata: UploadMetadata | null = null
-			let finalKey = ""
-			let uploadPromise: Promise<void> | null = null
+				let metadata: UploadMetadata | null = null
+				let finalKey = ""
+				let uploadPromise: Promise<void> | null = null
 
-			requestStream.subscribe({
-				next: (request: UploadRequest) => {
-					try {
-						if (request.metadata) {
-							metadata = request.metadata
-							finalKey = this.generateFileKey(metadata)
-							uploadPromise = this.startUploadPipeline(
-								finalKey,
-								passThrough
-							)
-						} else if (request.chunkData) {
-							this.processChunk(
-								request.chunkData,
-								metadata,
-								passThrough
-							)
+				requestStream.subscribe({
+					next: (request: UploadRequest) => {
+						try {
+							if (request.metadata) {
+								metadata = request.metadata
+								finalKey = this.generateFileKey(metadata)
+								uploadPromise = this.startUploadPipeline(
+									finalKey,
+									passThrough
+								)
+							} else if (request.chunkData) {
+								this.processChunk(
+									request.chunkData,
+									metadata,
+									passThrough
+								)
+							}
+						} catch (error: any) {
+							passThrough.destroy(error)
+
+							if (error instanceof RpcException) {
+								reject(error)
+							} else {
+								reject(
+									new RpcException({
+										code: 13,
+										details:
+											error.message ||
+											"Internal stream processing error"
+									})
+								)
+							}
 						}
-					} catch (error: any) {
+					},
+					error: (error: any) => {
+						this.logger.error({ error }, "Client stream error")
+
 						passThrough.destroy(error)
 
-						if (error instanceof RpcException) {
-							reject(error)
-						} else {
-							reject(
-								new RpcException({
-									code: 13,
-									details:
-										error.message ||
-										"Internal stream processing error"
-								})
-							)
-						}
+						reject(
+							new RpcException({
+								code: 1,
+								details: "Client closed the stream unexpectedly"
+							})
+						)
+					},
+					complete: () => {
+						this.finalizeUpload(
+							metadata,
+							uploadPromise,
+							passThrough,
+							finalKey
+						)
+							.then(resolve)
+							.catch(reject)
 					}
-				},
-				error: (error: any) => {
-					this.logger.error({ error }, "Client stream error")
-
-					passThrough.destroy(error)
-
-					reject(
-						new RpcException({
-							code: 1,
-							details: "Client closed the stream unexpectedly"
-						})
-					)
-				},
-				complete: () => {
-					this.finalizeUpload(
-						metadata,
-						uploadPromise,
-						passThrough,
-						finalKey
-					)
-						.then(resolve)
-						.catch(reject)
-				}
+				})
 			})
-		})
+		)
 	}
 
 	private generateFileKey(metadata: UploadMetadata): string {
@@ -124,7 +125,12 @@ export class UploadUseCase {
 			})
 		}
 
-		passThrough.write(chunkData)
+		const buffer = Buffer.from(
+			chunkData.buffer,
+			chunkData.byteOffset,
+			chunkData.byteLength
+		)
+		passThrough.write(buffer)
 	}
 
 	private async finalizeUpload(
