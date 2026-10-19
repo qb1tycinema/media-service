@@ -20,4 +20,8 @@ export class StorageValidator {
 	@IsString()
 	@IsNotEmpty()
 	public S3_PUBLIC_URL!: string
+
+	@IsString()
+	@IsNotEmpty()
+	public DISTRIBUTION_ID!: string
 }
