@@ -1,4 +1,8 @@
 import {
+	CloudFrontClient,
+	CreateInvalidationCommand
+} from "@aws-sdk/client-cloudfront"
+import {
 	CreateBucketCommand,
 	DeleteObjectCommand,
 	GetObjectCommand,
@@ -17,9 +21,16 @@ import type { AllConfigs } from "@/config"
 
 @Injectable()
 export class S3Service implements OnModuleInit {
-	private readonly client: S3Client
+	private client: S3Client
+	private cloudClient: CloudFrontClient
+
 	private readonly bucket: string
 	private readonly cdnUrl: string
+	private readonly cfDistributionId: string
+
+	private readonly region: string
+	private readonly accessKeyId: string
+	private readonly secretAccessKey: string
 
 	public constructor(
 		private readonly configService: ConfigService<AllConfigs>,
@@ -27,29 +38,47 @@ export class S3Service implements OnModuleInit {
 	) {
 		this.logger.setContext(S3Service.name)
 
-		const region = this.configService.get("storage.region", { infer: true })
-		const accessKeyId = this.configService.get("storage.accessKey", {
-			infer: true
-		})
-		const secretAccessKey = this.configService.get("storage.secretKey", {
-			infer: true
-		})
-
 		this.bucket = this.configService.get("storage.bucket", { infer: true })
 		this.cdnUrl = this.configService.get("storage.publicUrl", {
 			infer: true
 		})
+		this.cfDistributionId = this.configService.get(
+			"storage.cfDistributionId",
+			{ infer: true }
+		)
 
-		this.client = new S3Client({
-			region,
-			credentials: {
-				accessKeyId,
-				secretAccessKey
-			}
+		this.region = this.configService.get("storage.region", { infer: true })
+		this.accessKeyId = this.configService.get("storage.accessKey", {
+			infer: true
+		})
+		this.secretAccessKey = this.configService.get("storage.secretKey", {
+			infer: true
 		})
 	}
 
 	public async onModuleInit() {
+		this.client = new S3Client({
+			region: this.region,
+			credentials: {
+				accessKeyId: this.accessKeyId,
+				secretAccessKey: this.secretAccessKey
+			}
+		})
+
+		if (this.cfDistributionId) {
+			this.cloudClient = new CloudFrontClient({
+				region: this.region,
+				credentials: {
+					accessKeyId: this.accessKeyId,
+					secretAccessKey: this.secretAccessKey
+				}
+			})
+
+			this.logger.info(
+				"CloudFront client initialized for cache invalidation"
+			)
+		}
+
 		try {
 			await this.client.send(
 				new HeadBucketCommand({ Bucket: this.bucket })
@@ -114,6 +143,35 @@ export class S3Service implements OnModuleInit {
 		})
 
 		await this.client.send(command)
+		this.logger.debug(`Deleted file from S3: ${key}`)
+
+		if (this.cfDistributionId && this.cloudClient) {
+			await this.invalidateCloudFrontCache(`/${key}`)
+		}
+	}
+
+	private async invalidateCloudFrontCache(path: string): Promise<void> {
+		try {
+			const callerReference = `invalidate-${Date.now()}`
+			const command = new CreateInvalidationCommand({
+				DistributionId: this.cfDistributionId,
+				InvalidationBatch: {
+					CallerReference: callerReference,
+					Paths: {
+						Quantity: 1,
+						Items: [path]
+					}
+				}
+			})
+
+			await this.cloudClient.send(command)
+			this.logger.info(`CloudFront cache invalidated for path: ${path}`)
+		} catch (error) {
+			this.logger.error(
+				{ error },
+				`Failed to invalidate CloudFront cache for path: ${path}`
+			)
+		}
 	}
 
 	public getPublicUrl(key: string) {
@@ -143,8 +201,9 @@ export class S3Service implements OnModuleInit {
 	}
 
 	public async close(): Promise<void> {
-		this.client.destroy()
-		this.logger.info("S3 client destroyed")
+		this.client?.destroy()
+		this.cloudClient?.destroy()
+		this.logger.info("AWS clients destroyed")
 	}
 
 	public async onModuleDestroy(): Promise<void> {
