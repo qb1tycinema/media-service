@@ -4,4 +4,5 @@ export interface StorageConfig {
 	accessKey: string
 	secretKey: string
 	publicUrl: string
+	cfDistributionId: string
 }
