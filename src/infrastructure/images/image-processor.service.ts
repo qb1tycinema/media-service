@@ -30,6 +30,7 @@ export class ImageProcessorService implements IImageProcessor {
 
 		transformer.on("error", err => {
 			this.logger.error({ err }, "Error during image processing in Sharp")
+			input.emit("error", err)
 		})
 
 		return input.pipe(transformer)
