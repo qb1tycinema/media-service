@@ -19,7 +19,7 @@ export class MediaController {
 	) {}
 
 	@GrpcStreamMethod("MediaService", "Upload")
-	public upload(data: Observable<UploadRequest>): Promise<UploadResponse> {
+	public upload(data: Observable<UploadRequest>): Observable<UploadResponse> {
 		return this.uploadUseCase.execute(data)
 	}
 
