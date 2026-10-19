@@ -20,6 +20,8 @@ export interface IStorageService {
 
 	delete: (key: string) => Promise<void>
 
+	invalidateCloudFrontCache: (path: string) => Promise<void>
+
 	getPublicUrl: (key: string) => string
 
 	close: () => Promise<void>
