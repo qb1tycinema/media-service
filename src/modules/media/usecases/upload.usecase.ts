@@ -1,5 +1,6 @@
 import { Injectable } from "@nestjs/common"
 import { RpcException } from "@nestjs/microservices"
+import { RpcStatus } from "@qb1tycinema/common"
 import type {
 	UploadMetadata,
 	UploadRequest,
@@ -60,7 +61,7 @@ export class UploadUseCase {
 							} else {
 								reject(
 									new RpcException({
-										code: 13,
+										code: RpcStatus.INTERNAL,
 										details:
 											error.message ||
 											"Internal stream processing error"
@@ -76,7 +77,7 @@ export class UploadUseCase {
 
 						reject(
 							new RpcException({
-								code: 1,
+								code: RpcStatus.CANCELLED,
 								details: "Client closed the stream unexpectedly"
 							})
 						)
@@ -120,7 +121,7 @@ export class UploadUseCase {
 	): void {
 		if (!metadata) {
 			throw new RpcException({
-				code: 3,
+				code: RpcStatus.INVALID_ARGUMENT,
 				details: "Metadata must be sent in the first payload message"
 			})
 		}
@@ -141,7 +142,7 @@ export class UploadUseCase {
 	): Promise<UploadResponse> {
 		if (!metadata || !uploadPromise) {
 			throw new RpcException({
-				code: 3,
+				code: RpcStatus.INVALID_ARGUMENT,
 				details: "Stream completed but no valid data was received"
 			})
 		}
@@ -161,7 +162,7 @@ export class UploadUseCase {
 			this.logger.error({ error }, "Failed to upload stream to S3")
 
 			throw new RpcException({
-				code: 13,
+				code: RpcStatus.INTERNAL,
 				details: "Failed to process and upload image"
 			})
 		}
