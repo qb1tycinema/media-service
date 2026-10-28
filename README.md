@@ -39,7 +39,7 @@ STORAGE_BUCKET=qb1tycinema-media
 STORAGE_PUBLIC_URL=[https://cdn.qb1tycinema.com](https://cdn.qb1tycinema.com)
 
 # CDN (CloudFront) - необходимо для сброса кэша при удалении
-STORAGE_CF_DISTRIBUTION_ID=E173C2X6ZH5RTM
+STORAGE_CF_DISTRIBUTION_ID=YOUR_ID
 ```
 
 ---
